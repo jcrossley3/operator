@@ -29,6 +29,7 @@ import (
 	knsreconciler "knative.dev/operator/pkg/client/injection/reconciler/operator/v1alpha1/knativeserving"
 	"knative.dev/operator/pkg/reconciler/common"
 	ksc "knative.dev/operator/pkg/reconciler/knativeserving/common"
+	"knative.dev/operator/pkg/reconciler/knativeserving/ingress"
 	"knative.dev/pkg/logging"
 	pkgreconciler "knative.dev/pkg/reconciler"
 )
@@ -118,6 +119,8 @@ func (r *Reconciler) transform(ctx context.Context, manifest *mf.Manifest, comp 
 		ksc.AggregationRuleTransform(manifest.Client),
 	}
 	extra = append(extra, r.extension.Transformers(instance)...)
+
+	*manifest = manifest.Filter(ingress.Filters(instance))
 	return common.Transform(ctx, manifest, instance, extra...)
 }
 
