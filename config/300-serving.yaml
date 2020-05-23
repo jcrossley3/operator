@@ -57,6 +57,9 @@ spec:
         spec:
           description: Spec defines the desired state of KnativeServing
           properties:
+            dryRun:
+              description: Effectively prevents the operator from making changes true
+              type: boolean
             config:
               additionalProperties:
                 additionalProperties:
@@ -207,6 +210,9 @@ spec:
               type: array
             version:
               description: The version of the installed release
+              type: string
+            dryRunPatch:
+              description: An indication of what the operator would change
               type: string
           type: object
   version: v1alpha1

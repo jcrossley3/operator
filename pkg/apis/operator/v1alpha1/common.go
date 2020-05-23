@@ -99,6 +99,10 @@ type CommonSpec struct {
 	// Override containers' resource requirements
 	// +optional
 	Resources []ResourceRequirementsOverride `json:"resources,omitempty"`
+
+	// Castrate the operator
+	// +optional
+	DryRun *bool `json:"dryRun,omitempty"`
 }
 
 // GetConfig implements KComponentSpec.

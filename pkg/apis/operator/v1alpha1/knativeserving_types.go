@@ -73,6 +73,10 @@ type KnativeServingStatus struct {
 	// The version of the installed release
 	// +optional
 	Version string `json:"version,omitempty"`
+
+	// The 2-way merge patch denoting what the operator would change
+	// +optional
+	DryRunPatch string `json:"dryRunPatch,omitempty"`
 }
 
 // KnativeServingList contains a list of KnativeServing

@@ -18,6 +18,7 @@ package knativeserving
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	mf "github.com/manifestival/manifestival"
@@ -60,6 +61,11 @@ var _ knsreconciler.Finalizer = (*Reconciler)(nil)
 // FinalizeKind removes all resources after deletion of a KnativeServing.
 func (r *Reconciler) FinalizeKind(ctx context.Context, original *servingv1alpha1.KnativeServing) pkgreconciler.Event {
 	logger := logging.FromContext(ctx)
+
+	// Don't delete anything if we're DryRun'ing
+	if original.Spec.DryRun != nil && *original.Spec.DryRun {
+		return nil
+	}
 
 	// List all KnativeServings to determine if cluster-scoped resources should be deleted.
 	kss, err := r.operatorClientSet.OperatorV1alpha1().KnativeServings("").List(metav1.ListOptions{})
@@ -104,6 +110,10 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, ks *servingv1alpha1.Knat
 		return err
 	}
 
+	if dryRun(&manifest, ks) {
+		return nil
+	}
+
 	for _, stage := range stages {
 		if err := stage(ctx, &manifest, ks); err != nil {
 			return err
@@ -111,6 +121,23 @@ func (r *Reconciler) ReconcileKind(ctx context.Context, ks *servingv1alpha1.Knat
 	}
 	logger.Infow("Reconcile stages complete", "status", ks.Status)
 	return nil
+}
+
+// Check for DryRun mode and set DryRunPatch accordingly
+func dryRun(manifest *mf.Manifest, ks *servingv1alpha1.KnativeServing) bool {
+	result := ks.Spec.DryRun != nil && *ks.Spec.DryRun
+	if result {
+		diffs, err := manifest.DryRun()
+		if err != nil {
+			ks.Status.DryRunPatch = err.Error()
+		} else {
+			patch, _ := json.MarshalIndent(diffs, "", "  ")
+			ks.Status.DryRunPatch = string(patch)
+		}
+	} else {
+		ks.Status.DryRunPatch = ""
+	}
+	return result
 }
 
 // Transform the resources

@@ -53,6 +53,11 @@ func (in *CommonSpec) DeepCopyInto(out *CommonSpec) {
 			(*in)[i].DeepCopyInto(&(*out)[i])
 		}
 	}
+	if in.DryRun != nil {
+		in, out := &in.DryRun, &out.DryRun
+		*out = new(bool)
+		**out = **in
+	}
 	return
 }
 
