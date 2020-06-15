@@ -17,6 +17,7 @@ limitations under the License.
 package common
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -27,6 +28,7 @@ import (
 	mf "github.com/manifestival/manifestival"
 	"golang.org/x/mod/semver"
 	"knative.dev/operator/pkg/apis/operator/v1alpha1"
+	"knative.dev/pkg/logging"
 )
 
 const (
@@ -53,20 +55,34 @@ func TargetVersion(instance v1alpha1.KComponent) string {
 }
 
 // TargetManifest returns the manifest for the TargetVersion
-func TargetManifest(instance v1alpha1.KComponent) (mf.Manifest, error) {
-	return fetch(manifestPath(TargetVersion(instance), instance))
+func TargetManifest(ctx context.Context, instance v1alpha1.KComponent, stages ...ReconcileStage) (mf.Manifest, error) {
+	manifest, err := fetch(manifestPath(TargetVersion(instance), instance))
+	if err != nil {
+		return manifest, err
+	}
+	err = ReconcileStages(stages).Execute(ctx, &manifest, instance)
+	return manifest, err
 }
 
 // InstalledManifest returns the version currently installed, which is
-// harder than it sounds, since status.version isn't set until the
+// harder than it sounds, because status.version isn't set until the
 // target version is successfully installed, which can take some time.
-// So we return the target manifest if status.version is empty.
-func InstalledManifest(instance v1alpha1.KComponent) (mf.Manifest, error) {
+// So we return the target manifest if we can't find the installed
+// one.
+func InstalledManifest(ctx context.Context, instance v1alpha1.KComponent, stages ...ReconcileStage) (mf.Manifest, error) {
+	logger := logging.FromContext(ctx)
 	current := instance.GetStatus().GetVersion()
-	if current != "" {
-		return fetch(manifestPath(current, instance))
+	if current == "" {
+		logger.Error("Unknown status version, using target")
+		return TargetManifest(ctx, instance, stages...)
 	}
-	return TargetManifest(instance)
+	manifest, err := fetch(manifestPath(current, instance))
+	if err != nil {
+		logger.Error("Unable to fetch installed manifest, using target", err)
+		return TargetManifest(ctx, instance, stages...)
+	}
+	err = ReconcileStages(stages).Execute(ctx, &manifest, instance)
+	return manifest, err
 }
 
 func fetch(path string) (mf.Manifest, error) {

@@ -98,7 +98,7 @@ func IsKnativeDeploymentReady(dpList *v1.DeploymentList, expectedDeployments []s
 // GetExpectedDeployments will return an array of deployment resources based on the version for the knative
 // component.
 func GetExpectedDeployments(t *testing.T, instance v1alpha1.KComponent) (mf.Manifest, []string) {
-	manifest, err := common.InstalledManifest(instance)
+	manifest, err := common.InstalledManifest(context.TODO(), instance)
 	if err != nil {
 		t.Fatalf("Failed to get the manifest for Knative: %v", err)
 	}
