@@ -152,6 +152,7 @@ github.com/manifestival/client-go-client
 # github.com/manifestival/manifestival v0.5.1-0.20200526175228-b0136214e13f
 ## explicit
 github.com/manifestival/manifestival
+github.com/manifestival/manifestival/fake
 github.com/manifestival/manifestival/overlay
 github.com/manifestival/manifestival/patch
 github.com/manifestival/manifestival/sources
