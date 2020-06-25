@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	util "knative.dev/operator/pkg/reconciler/common/testing"
+	"knative.dev/operator/pkg/reconciler/knativeserving/ingress"
 
 	mf "github.com/manifestival/manifestival"
 	"knative.dev/operator/pkg/apis/operator/v1alpha1"
@@ -74,6 +75,8 @@ func TestKnativeServingPostUpgrade(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get KnativeServing manifest: %v", err)
 		}
+		// Filter out ingress related resources.
+		preManifest = preManifest.Filter(ingress.Filters(instance))
 		resources.AssertKnativeObsoleteResource(t, clients, names.Namespace,
 			preManifest.Filter(mf.Not(mf.In(targetManifest))).Resources())
 	})
